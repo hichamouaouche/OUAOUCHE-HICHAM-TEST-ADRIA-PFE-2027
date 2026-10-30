@@ -1,0 +1,76 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: transaction-service
+  config:
+    import: optional:configserver:${CONFIG_URL:http://localhost:8888}
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:transactions;DB_CLOSE_DELAY=-1}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/bank}
+          jwk-set-uri: ${KEYCLOAK_JWKS:http://localhost:8180/realms/bank/protocol/openid-connect/certs}
+      client:
+        registration:
+          bank-internal:
+            provider: keycloak
+            client-id: transaction-service
+            client-secret: ${TRANSACTION_CLIENT_SECRET:transaction-secret}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/bank/protocol/openid-connect/token}
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 2000
+            read-timeout: 3000
+  ai:
+    mcp:
+      server:
+        name: transaction-mcp
+        version: 1.0.0
+        protocol: STREAMABLE
+        type: SYNC
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      account:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+        ignore-exceptions:
+          - ma.enset.bank.transaction.service.AccountNotFoundException
+          - ma.enset.bank.transaction.service.TransactionRuleException
+  retry:
+    instances:
+      account:
+        max-attempts: 3
+        wait-duration: 300ms
+        retry-exceptions:
+          - feign.FeignException
+        ignore-exceptions:
+          - ma.enset.bank.transaction.service.AccountNotFoundException
+          - ma.enset.bank.transaction.service.TransactionRuleException

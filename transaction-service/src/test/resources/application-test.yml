@@ -1,0 +1,19 @@
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:transaction-test;DB_CLOSE_DELAY=-1
+  kafka:
+    admin:
+      auto-create: false
+eureka:
+  client:
+    enabled: false
+bank:
+  transaction:
+    max-amount: 1000
