@@ -1,0 +1,193 @@
+x-java-service: &java-service
+  restart: unless-stopped
+  environment: &java-env
+    JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
+    CONFIG_URL: http://config-service:8888
+    EUREKA_URL: http://discovery-service:8761/eureka
+    KEYCLOAK_ISSUER: http://localhost:8180/realms/bank
+    KEYCLOAK_JWKS: http://keycloak:8080/realms/bank/protocol/openid-connect/certs
+    KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/bank/protocol/openid-connect/token
+
+x-healthcheck: &healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 30
+  start_period: 30s
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: bank
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bank}
+    volumes:
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      <<: *healthcheck
+      test: pg_isready -U bank -d transactions
+
+  kafka:
+    image: apache/kafka:4.1.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_HEAP_OPTS: -Xmx256m -Xms128m
+    healthcheck:
+      <<: *healthcheck
+      test: /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # L'émetteur reste localhost:8180 pour tous ; les conteneurs joignent keycloak:8080
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: -Xmx512m
+    volumes:
+      - ./keycloak/bank-realm.json:/opt/keycloak/data/import/bank-realm.json:ro
+    ports:
+      - "8180:8080"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+
+  discovery-service:
+    <<: *java-service
+    build: ./discovery-service
+    image: bank/discovery-service:latest
+    ports:
+      - "8761:8761"
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8761/actuator/health/readiness
+
+  config-service:
+    <<: *java-service
+    build: ./config-service
+    image: bank/config-service:latest
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8888/actuator/health/readiness
+
+  account-service:
+    <<: *java-service
+    build: ./account-service
+    image: bank/account-service:latest
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:postgresql://postgres:5432/accounts
+      DB_USER: bank
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-bank}
+    depends_on: &platform-deps
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8081/actuator/health/readiness
+
+  transaction-service:
+    <<: *java-service
+    build: ./transaction-service
+    image: bank/transaction-service:latest
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:postgresql://postgres:5432/transactions
+      DB_USER: bank
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-bank}
+      KAFKA_SERVERS: kafka:9092
+      TRANSACTION_CLIENT_SECRET: ${TRANSACTION_CLIENT_SECRET:-transaction-secret}
+    depends_on:
+      <<: *platform-deps
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8082/actuator/health/readiness
+
+  transaction-consumer-service:
+    <<: *java-service
+    build: ./transaction-consumer-service
+    image: bank/transaction-consumer-service:latest
+    environment:
+      <<: *java-env
+      KAFKA_SERVERS: kafka:9092
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8084/actuator/health/readiness
+
+  assistant-service:
+    <<: *java-service
+    build: ./assistant-service
+    image: bank/assistant-service:latest
+    environment:
+      <<: *java-env
+      ACCOUNT_MCP_URL: http://account-service:8081
+      TRANSACTION_MCP_URL: http://transaction-service:8082
+      ASSISTANT_CLIENT_SECRET: ${ASSISTANT_CLIENT_SECRET:-assistant-secret}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://ollama.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-missing}
+      LLM_MODEL: ${LLM_MODEL:-gpt-oss:20b}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}
+    depends_on:
+      account-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8083/actuator/health/readiness
+
+  gateway-service:
+    <<: *java-service
+    build: ./gateway-service
+    image: bank/gateway-service:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: wget -qO- http://localhost:8080/actuator/health/readiness
+
+  bank-web:
+    build: ./bank-web
+    image: bank/bank-web:latest
+    ports:
+      - "4200:80"
+    depends_on:
+      - gateway-service
+
+volumes:
+  postgres-data:
