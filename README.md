@@ -1,5 +1,8 @@
 # Plateforme bancaire : microservices, IA et full-stack
 
+**Réalisé par :** Hicham OUAOUCHE  
+**Master :** 2-SDIA
+
 Épreuve technique ADRIA / ENSET 2027. La plateforme gère des comptes et des transactions, publie des événements Kafka, propose un assistant conversationnel relié aux services par MCP, et inclut une expérimentation de détection de fraude en Python.
 
 Les diagrammes de la partie B (architecture, classes, flux d'une transaction) sont dans [docs/conception.md](docs/conception.md).
