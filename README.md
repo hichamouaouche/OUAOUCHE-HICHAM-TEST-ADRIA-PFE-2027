@@ -31,7 +31,7 @@
 | D - Services techniques | Gateway, Eureka et Config (`bank.transaction.max-amount=1000`) opérationnels |
 | E - Chatbot agentique | Agent Spring AI relié aux serveurs MCP, testé par REST et depuis le web. Client Telegram écrit, **non testé** |
 | F - Kafka | Événements publiés après validation, clé `accountId`, consumer de journalisation |
-| G - Client | Client Angular connecté à Keycloak |
+| G - Client | Client Angular connecté à Keycloak, avec tableau de bord |
 | H - Fraude | Script exécutable : average precision de 0,187 pour un taux de base de 0,051 |
 | I - DevOps | Dockerfiles, Docker Compose et pipeline GitHub Actions |
 
@@ -71,7 +71,7 @@ Attendre ensuite environ 45 secondes que la gateway découvre les services dans 
 - lancer le test de bout en bout : `bash scripts/e2e.sh`
 - lancer les tests automatisés : `mvn test`
 
-Sur une machine limitée en mémoire, `bash scripts/start-light.sh` démarre les services un par un, sans l'assistant ni le consumer, et arrête tout si la mémoire devient trop basse. Arrêt : `docker compose stop`.
+Sur une machine limitée en mémoire, `bash scripts/start-light.sh` démarre les services un par un, sans l'assistant ni le consumer, et arrête tout si la mémoire devient trop basse. Dans ce mode, la page Assistant ne répond pas. Arrêt : `docker compose stop`.
 
 Comptes de démonstration (mot de passe identique à l'identifiant) :
 
@@ -217,6 +217,8 @@ Le client Telegram est écrit et limité à une liste de chats autorisés, mais 
 ## Partie G : client web
 
 Le client Angular se connecte à Keycloak (flux PKCE) et ajoute le jeton aux appels vers la gateway. Il couvre un tableau de bord, les comptes, les paiements, les virements et l'assistant. La création et le blocage de comptes n'apparaissent que pour un administrateur.
+
+Le tableau de bord est la page d'accueil. Il affiche le nombre de comptes (total, actifs, bloqués), le nombre de transactions, le solde total par devise, les transactions par catégorie et les dernières transactions.
 
 ![Connexion par Keycloak](docs/captures/01-keycloak-login.png)
 
