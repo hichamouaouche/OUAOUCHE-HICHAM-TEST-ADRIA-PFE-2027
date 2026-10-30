@@ -19,6 +19,7 @@
 - [Partie H : détection de fraude](#partie-h--détection-de-fraude)
 - [Partie I : DevOps](#partie-i--devops)
 - [Choix de conception](#choix-de-conception)
+- [Extraits du code source](#extraits-du-code-source)
 - [Limites connues](#limites-connues)
 - [Conclusion](#conclusion)
 
@@ -222,9 +223,11 @@ Le tableau de bord est la page d'accueil. Il affiche le nombre de comptes (total
 
 ![Connexion par Keycloak](docs/captures/01-keycloak-login.png)
 
-![Gestion des comptes](docs/captures/02-web-comptes.png)
+![Tableau de bord](docs/captures/1.png)
 
-![Paiements, virements et historique](docs/captures/03-web-transactions.png)
+![Gestion des comptes](docs/captures/2.png)
+
+![Paiements, virements et historique](docs/captures/3.png)
 
 ## Partie H : détection de fraude
 
@@ -296,6 +299,36 @@ Actuator expose `/actuator/health/readiness` et `/actuator/health/liveness` ; Do
 - **Droits de l'assistant.** Ses outils ne donnent pas plus de droits qu'un `USER`. Sa demande de confirmation repose sur le LLM : elle ne remplace pas un contrôle côté serveur.
 - **MCP sans état.** Les serveurs MCP sont en mode `STATELESS`, car en mode avec session l'assistant perdait ses outils au redémarrage d'un service.
 - **Telegram.** Le bot ne répond qu'aux chats listés dans `TELEGRAM_ALLOWED_CHAT_IDS`.
+
+## Extraits du code source
+
+Connecteur MCP de `account-service`, qui appelle la même couche service que REST et GraphQL :
+
+![Connecteur MCP de account-service, qui appelle la même couche service que REST et GraphQL](docs/captures/code-mcp.png)
+
+Enregistrement d'une transaction : contrôles, insertion, débit, puis événement :
+
+![Enregistrement d'une transaction : contrôles, insertion, débit, puis événement](docs/captures/code-transaction.png)
+
+Mise à jour du solde : le verrou et le contrôle de l'`operationId` empêchent un double débit :
+
+![Mise à jour du solde : le verrou et le contrôle de l'operationId empêchent un double débit](docs/captures/code-solde.png)
+
+Appels à `account-service` protégés par Retry et CircuitBreaker :
+
+![Appels à account-service protégés par Retry et CircuitBreaker](docs/captures/code-resilience.png)
+
+Publication Kafka après validation, avec `accountId` comme clé :
+
+![Publication Kafka après validation, avec accountId comme clé](docs/captures/code-kafka.png)
+
+Agent : consignes, mémoire de conversation et outils découverts par MCP :
+
+![Agent : consignes, mémoire de conversation et outils découverts par MCP](docs/captures/code-agent.png)
+
+Pipeline de prétraitement et modèle de détection de fraude :
+
+![Pipeline de prétraitement et modèle de détection de fraude](docs/captures/code-fraude.png)
 
 ## Limites connues
 
