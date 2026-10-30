@@ -1,0 +1,13 @@
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:account-test;DB_CLOSE_DELAY=-1
+eureka:
+  client:
+    enabled: false
