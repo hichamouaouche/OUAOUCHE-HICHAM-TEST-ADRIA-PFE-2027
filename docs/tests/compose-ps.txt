@@ -1,0 +1,12 @@
+SERVICE                        STATUS                        PORTS
+account-service                Up 2 minutes (healthy)        8081/tcp
+assistant-service              Up About a minute (healthy)   8083/tcp
+bank-web                       Up 2 minutes                  0.0.0.0:4200->80/tcp, [::]:4200->80/tcp
+config-service                 Up 3 minutes (healthy)        8888/tcp
+discovery-service              Up 3 minutes (healthy)        0.0.0.0:8761->8761/tcp, [::]:8761->8761/tcp
+gateway-service                Up 2 minutes (healthy)        0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+kafka                          Up 3 minutes (healthy)        9092/tcp
+keycloak                       Up 3 minutes (healthy)        8443/tcp, 9000/tcp, 0.0.0.0:8180->8080/tcp, [::]:8180->8080/tcp
+postgres                       Up 3 minutes (healthy)        5432/tcp
+transaction-consumer-service   Up 3 minutes (healthy)        8084/tcp
+transaction-service            Up 2 minutes (healthy)        8082/tcp

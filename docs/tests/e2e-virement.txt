@@ -1,0 +1,17 @@
+=== Virement de 300 EUR de CUST-A vers CUST-B
+[{"accountId":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","amount":300,"currency":"EUR","merchantCategory":"TRANSFER","country":"FR","type":"DEBIT","transferId":"bd6453b8-7922-424b-8b66-73dbc10da8b0","createdAt":"2026-10-30T10:25:23.450927574Z","id":"8e3be013-6b05-4994-9d58-5bd2cd17ea9f"},{"accountId":"7390bfca-1576-45b6-88f7-478653705776","amount":300,"currency":"EUR","merchantCategory":"TRANSFER","country":"FR","type":"CREDIT","transferId":"bd6453b8-7922-424b-8b66-73dbc10da8b0","createdAt":"2026-10-30T10:25:23.453854106Z","id":"68bc8adb-0270-40dd-9171-c8eed3e39af6"}]
+-> HTTP 201
+{"customerReference":"CUST-A","currency":"EUR","balance":1450.0,"id":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","status":"ACTIVE"}
+-> HTTP 200
+{"customerReference":"CUST-B","currency":"EUR","balance":400.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 200
+
+=== Virement vers un compte d'une autre devise : refus
+{"detail":"La devise EUR ne correspond pas à celle du compte (USD)","instance":"/api/transfers","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Assistant IA via MCP : confirmation
+{"reply":"Virement effectué : 10 € transférés de beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924 vers 7390bfca‑1576‑45b6‑88f7‑478653705776.  \nNouveau solde : 410,00 € pour le compte 7390bfca‑1576‑45b6‑88f7‑478653705776. \nPour le compte beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924, le solde tombe à 1427,50 €."}
+-> HTTP 200
+{"customerReference":"CUST-B","currency":"EUR","balance":410.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 200

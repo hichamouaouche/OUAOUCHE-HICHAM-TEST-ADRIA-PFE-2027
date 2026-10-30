@@ -1,0 +1,31 @@
+=== Transaction valide de 250 EUR : le solde passe de 2000 à 1750
+{"accountId":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","amount":250.00,"currency":"EUR","merchantCategory":"GROCERY","country":"FR","type":"DEBIT","transferId":null,"createdAt":"2026-10-30T10:25:22.200274612Z","id":"8f37acc6-6255-4921-ac60-a6babf5cf38e"}
+-> HTTP 201
+{"customerReference":"CUST-A","currency":"EUR","balance":1750.0,"id":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","status":"ACTIVE"}
+-> HTTP 200
+
+=== Règle : montant négatif
+{"detail":"Le montant doit être strictement positif","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : plafond de 1000 dépassé (valeur issue du config-service)
+{"detail":"Le montant dépasse le plafond de 1000","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : devise différente de celle du compte
+{"detail":"La devise USD ne correspond pas à celle du compte (EUR)","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : compte inexistant
+{"detail":"Compte introuvable : 00000000-0000-0000-0000-000000000000","instance":"/api/transactions","status":404,"title":"Not Found"}
+-> HTTP 404
+
+=== Règle : solde insuffisant
+{"detail":"Solde insuffisant sur le compte 7390bfca-1576-45b6-88f7-478653705776","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : compte bloqué
+{"customerReference":"CUST-C","currency":"USD","balance":100.0,"id":"b3376888-f7bb-4781-9bd2-69fc70e4e04f","status":"BLOCKED"}
+-> HTTP 200
+{"detail":"Le compte b3376888-f7bb-4781-9bd2-69fc70e4e04f n'est pas actif","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422

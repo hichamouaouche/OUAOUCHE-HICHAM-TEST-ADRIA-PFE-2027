@@ -1,0 +1,9 @@
+=== tools/list sur http://account-service:8081/mcp
+  - get_account : Retourne un compte (statut, devise, solde) à partir de son UUID
+  - list_accounts : Liste tous les comptes bancaires
+=== tools/list sur http://transaction-service:8082/mcp
+  - create_transaction : Enregistre un paiement qui débite un compte
+  - list_transactions : Liste les transactions d'un compte, les plus récentes d'abord
+  - transfer : Effectue un virement d'un compte vers un autre
+=== Sans jeton
+HTTP/1.1 401

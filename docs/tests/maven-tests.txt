@@ -1,0 +1,15 @@
+$ mvn test
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.26 s -- in ma.enset.bank.account.AccountApiTest
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.45 s -- in ma.enset.bank.transaction.TransactionServiceTest
+Tests run: 14, Failures: 0, Errors: 0, Skipped: 0
+Reactor Summary for bank-platform 1.0.0:
+bank-platform ...................................... SUCCESS [  0.002 s]
+discovery-service .................................. SUCCESS [  1.461 s]
+config-service ..................................... SUCCESS [  0.153 s]
+gateway-service .................................... SUCCESS [  0.292 s]
+account-service .................................... SUCCESS [ 14.813 s]
+transaction-service ................................ SUCCESS [ 21.136 s]
+transaction-consumer-service ....................... SUCCESS [  0.072 s]
+assistant-service .................................. SUCCESS [  0.150 s]
+BUILD SUCCESS

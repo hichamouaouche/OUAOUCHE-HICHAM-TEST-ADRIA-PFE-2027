@@ -1,0 +1,13 @@
+=== Assistant IA via MCP : lecture
+{"reply":"Solde : 400,00 €  \nStatut : ACTIVE"}
+-> HTTP 200
+
+=== Assistant IA via MCP : demande de virement (doit demander confirmation)
+{"reply":"Je vais transférer 10 € du compte beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924 vers le compte 7390bfca‑1576‑45b6‑88f7‑478653705776, pays FR.  \nEst‑ce que vous confirmez cette opération ?"}
+-> HTTP 200
+
+=== Assistant IA via MCP : confirmation
+{"reply":"Virement effectué : 10 € transférés de beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924 vers 7390bfca‑1576‑45b6‑88f7‑478653705776.  \nNouveau solde : 410,00 € pour le compte 7390bfca‑1576‑45b6‑88f7‑478653705776. \nPour le compte beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924, le solde tombe à 1427,50 €."}
+-> HTTP 200
+{"customerReference":"CUST-B","currency":"EUR","balance":410.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 200

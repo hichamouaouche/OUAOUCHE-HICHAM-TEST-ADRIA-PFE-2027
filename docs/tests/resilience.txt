@@ -1,0 +1,23 @@
+=== account-service en marche
+{"accountId":"5d7c6536-d500-43a8-be29-5e636497526d","amount":10,"currency":"EUR","merchantCategory":"GROCERY","country":"FR","type":"DEBIT","transferId":null,"createdAt":"2026-10-30T10:13:25.320470884
+
+$ docker compose stop account-service
+ Container projet-adria-account-service-1 Stopped 
+--- tentative 1
+{"detail":"Le service des comptes est momentanément indisponible, réessayez plus tard","instance":"/api/transactions","status":503,"title":"Service Unavailable"} -> HTTP 503 en 6.659062s
+--- tentative 2
+{"detail":"Le service des comptes est momentanément indisponible, réessayez plus tard","instance":"/api/transactions","status":503,"title":"Service Unavailable"} -> HTTP 503 en 4.651482s
+--- tentative 3
+{"detail":"Le service des comptes est momentanément indisponible, réessayez plus tard","instance":"/api/transactions","status":503,"title":"Service Unavailable"} -> HTTP 503 en 0.018960s
+--- tentative 4
+{"detail":"Le service des comptes est momentanément indisponible, réessayez plus tard","instance":"/api/transactions","status":503,"title":"Service Unavailable"} -> HTTP 503 en 0.019645s
+--- tentative 5
+{"detail":"Le service des comptes est momentanément indisponible, réessayez plus tard","instance":"/api/transactions","status":503,"title":"Service Unavailable"} -> HTTP 503 en 0.018066s
+
+=== État du circuit (actuator de transaction-service)
+{'state': 'OPEN', 'failureRate': '50.0%', 'failedCalls': 5, 'notPermittedCalls': 4}
+
+$ docker compose start account-service
+ Container projet-adria-account-service-1 Started 
+--- rétabli après 60 s
+{"accountId":"5d7c6536-d500-43a8-be29-5e636497526d","amount":10,"currency":"EUR","merchantCategory":"GROCERY","country":"FR","type":"DEBIT","transferId":null,"createdAt":"2026-10-30T10:14:52.478067348

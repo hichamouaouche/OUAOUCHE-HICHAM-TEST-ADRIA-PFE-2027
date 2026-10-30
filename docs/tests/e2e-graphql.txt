@@ -1,0 +1,11 @@
+=== GraphQL account-service
+{"data":{"account":{"customerReference":"CUST-A","status":"ACTIVE","balance":1450.0,"currency":"EUR"}}}
+-> HTTP 200
+
+=== GraphQL transaction-service
+{"data":{"transactions":[{"type":"DEBIT","amount":300.0,"merchantCategory":"TRANSFER","createdAt":"2026-10-30T10:25:23.450928Z"},{"type":"DEBIT","amount":250.0,"merchantCategory":"GROCERY","createdAt":"2026-10-30T10:25:22.200275Z"}]}}
+-> HTTP 200
+
+=== GraphQL : mutation de paiement
+{"data":{"createTransaction":{"id":"cd5c067a-6580-49ed-9853-735bb98007e9","amount":12.5,"type":"DEBIT"}}}
+-> HTTP 200

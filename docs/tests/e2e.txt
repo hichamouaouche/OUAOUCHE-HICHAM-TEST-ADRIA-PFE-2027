@@ -1,0 +1,95 @@
+
+=== Sans jeton : refus
+-> HTTP 401
+
+=== Keycloak : un utilisateur standard ne peut pas créer de compte
+
+-> HTTP 403
+
+=== REST : création de deux comptes EUR et d'un compte USD par un administrateur
+{"customerReference":"CUST-A","currency":"EUR","balance":2000.0,"id":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","status":"ACTIVE"}
+-> HTTP 201
+{"customerReference":"CUST-B","currency":"EUR","balance":100.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 201
+{"customerReference":"CUST-C","currency":"USD","balance":100.0,"id":"b3376888-f7bb-4781-9bd2-69fc70e4e04f","status":"ACTIVE"}
+-> HTTP 201
+
+=== Transaction valide de 250 EUR : le solde passe de 2000 à 1750
+{"accountId":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","amount":250.00,"currency":"EUR","merchantCategory":"GROCERY","country":"FR","type":"DEBIT","transferId":null,"createdAt":"2026-10-30T10:25:22.200274612Z","id":"8f37acc6-6255-4921-ac60-a6babf5cf38e"}
+-> HTTP 201
+{"customerReference":"CUST-A","currency":"EUR","balance":1750.0,"id":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","status":"ACTIVE"}
+-> HTTP 200
+
+=== Règle : montant négatif
+{"detail":"Le montant doit être strictement positif","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : plafond de 1000 dépassé (valeur issue du config-service)
+{"detail":"Le montant dépasse le plafond de 1000","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : devise différente de celle du compte
+{"detail":"La devise USD ne correspond pas à celle du compte (EUR)","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : compte inexistant
+{"detail":"Compte introuvable : 00000000-0000-0000-0000-000000000000","instance":"/api/transactions","status":404,"title":"Not Found"}
+-> HTTP 404
+
+=== Règle : solde insuffisant
+{"detail":"Solde insuffisant sur le compte 7390bfca-1576-45b6-88f7-478653705776","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Virement de 300 EUR de CUST-A vers CUST-B
+[{"accountId":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","amount":300,"currency":"EUR","merchantCategory":"TRANSFER","country":"FR","type":"DEBIT","transferId":"bd6453b8-7922-424b-8b66-73dbc10da8b0","createdAt":"2026-10-30T10:25:23.450927574Z","id":"8e3be013-6b05-4994-9d58-5bd2cd17ea9f"},{"accountId":"7390bfca-1576-45b6-88f7-478653705776","amount":300,"currency":"EUR","merchantCategory":"TRANSFER","country":"FR","type":"CREDIT","transferId":"bd6453b8-7922-424b-8b66-73dbc10da8b0","createdAt":"2026-10-30T10:25:23.453854106Z","id":"68bc8adb-0270-40dd-9171-c8eed3e39af6"}]
+-> HTTP 201
+{"customerReference":"CUST-A","currency":"EUR","balance":1450.0,"id":"beb53be1-66fd-4cf6-a9c2-4bc39c3ba924","status":"ACTIVE"}
+-> HTTP 200
+{"customerReference":"CUST-B","currency":"EUR","balance":400.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 200
+
+=== Virement vers un compte d'une autre devise : refus
+{"detail":"La devise EUR ne correspond pas à celle du compte (USD)","instance":"/api/transfers","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== Règle : compte bloqué
+{"customerReference":"CUST-C","currency":"USD","balance":100.0,"id":"b3376888-f7bb-4781-9bd2-69fc70e4e04f","status":"BLOCKED"}
+-> HTTP 200
+{"detail":"Le compte b3376888-f7bb-4781-9bd2-69fc70e4e04f n'est pas actif","instance":"/api/transactions","status":422,"title":"Unprocessable Content"}
+-> HTTP 422
+
+=== GraphQL account-service
+{"data":{"account":{"customerReference":"CUST-A","status":"ACTIVE","balance":1450.0,"currency":"EUR"}}}
+-> HTTP 200
+
+=== GraphQL transaction-service
+{"data":{"transactions":[{"type":"DEBIT","amount":300.0,"merchantCategory":"TRANSFER","createdAt":"2026-10-30T10:25:23.450928Z"},{"type":"DEBIT","amount":250.0,"merchantCategory":"GROCERY","createdAt":"2026-10-30T10:25:22.200275Z"}]}}
+-> HTTP 200
+
+=== GraphQL : mutation de paiement
+{"data":{"createTransaction":{"id":"cd5c067a-6580-49ed-9853-735bb98007e9","amount":12.5,"type":"DEBIT"}}}
+-> HTTP 200
+
+=== Routes internes non exposées par la gateway
+{"timestamp":"2026-10-30T10:25:24.905Z","path":"/internal/accounts/beb53be1-66fd-4cf6-a9c2-4bc39c3ba924/credit","status":404,"error":"Not Found","requestId":"eb00c168-31"}
+-> HTTP 404
+
+=== Assistant IA via MCP : lecture
+{"reply":"Solde : 400,00 €  \nStatut : ACTIVE"}
+-> HTTP 200
+
+=== Assistant IA via MCP : demande de virement (doit demander confirmation)
+{"reply":"Je vais transférer 10 € du compte beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924 vers le compte 7390bfca‑1576‑45b6‑88f7‑478653705776, pays FR.  \nEst‑ce que vous confirmez cette opération ?"}
+-> HTTP 200
+
+=== Assistant IA via MCP : confirmation
+{"reply":"Virement effectué : 10 € transférés de beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924 vers 7390bfca‑1576‑45b6‑88f7‑478653705776.  \nNouveau solde : 410,00 € pour le compte 7390bfca‑1576‑45b6‑88f7‑478653705776. \nPour le compte beb53be1‑66fd‑4cf6‑a9c2‑4bc39c3ba924, le solde tombe à 1427,50 €."}
+-> HTTP 200
+{"customerReference":"CUST-B","currency":"EUR","balance":410.0,"id":"7390bfca-1576-45b6-88f7-478653705776","status":"ACTIVE"}
+-> HTTP 200
+
+=== Kafka : événements journalisés par le consumer
+2026-10-30T10:25:23.531Z  INFO 1 --- [transaction-consumer-service] [ntainer#0-0-C-1] m.e.b.consumer.TransactionEventListener  : Événement reçu [clé=7390bfca-1576-45b6-88f7-478653705776, partition=2] : TransactionCreatedEvent[eventId=581f4099-4055-40f8-ab17-8f241b78d276, eventType=TransactionCreated, transactionId=68bc8adb-0270-40dd-9171-c8eed3e39af6, accountId=7390bfca-1576-45b6-88f7-478653705776, amount=300, currency=EUR, occurredAt=2026-10-30T10:25:23.453854106Z]
+2026-10-30T10:25:24.876Z  INFO 1 --- [transaction-consumer-service] [ntainer#0-0-C-1] m.e.b.consumer.TransactionEventListener  : Événement reçu [clé=beb53be1-66fd-4cf6-a9c2-4bc39c3ba924, partition=2] : TransactionCreatedEvent[eventId=0126d69f-3354-4af6-b96e-3b978d5e8b49, eventType=TransactionCreated, transactionId=cd5c067a-6580-49ed-9853-735bb98007e9, accountId=beb53be1-66fd-4cf6-a9c2-4bc39c3ba924, amount=12.5, currency=EUR, occurredAt=2026-10-30T10:25:24.842464604Z]
+2026-10-30T10:25:57.797Z  INFO 1 --- [transaction-consumer-service] [ntainer#0-0-C-1] m.e.b.consumer.TransactionEventListener  : Événement reçu [clé=beb53be1-66fd-4cf6-a9c2-4bc39c3ba924, partition=2] : TransactionCreatedEvent[eventId=c9acc86a-0c26-421b-b0aa-828b0a9fab6e, eventType=TransactionCreated, transactionId=46025f36-d450-4c26-8030-3f1ac96c8b9b, accountId=beb53be1-66fd-4cf6-a9c2-4bc39c3ba924, amount=10, currency=EUR, occurredAt=2026-10-30T10:25:57.672548233Z]
+2026-10-30T10:25:57.797Z  INFO 1 --- [transaction-consumer-service] [ntainer#0-0-C-1] m.e.b.consumer.TransactionEventListener  : Événement reçu [clé=7390bfca-1576-45b6-88f7-478653705776, partition=2] : TransactionCreatedEvent[eventId=79f56aba-ebb0-4034-8dee-59a89ce3d2e4, eventType=TransactionCreated, transactionId=d17aa9ee-5250-48ea-acc1-b52373e3c582, accountId=7390bfca-1576-45b6-88f7-478653705776, amount=10, currency=EUR, occurredAt=2026-10-30T10:25:57.677096124Z]

@@ -1,0 +1,4 @@
+$ curl http://config-service:8888/transaction-service/default
+name: transaction-service
+source: classpath:/config-repo/application.properties 
+  bank.transaction.max-amount = 1000
