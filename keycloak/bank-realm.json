@@ -57,6 +57,16 @@
       "realmRoles": ["USER", "ADMIN"]
     },
     {
+      "username": "hicham.ouaouche",
+      "email": "hicham.ouaouche@bank.local",
+      "firstName": "Hicham",
+      "lastName": "OUAOUCHE",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "hicham.ouaouche", "temporary": false }],
+      "realmRoles": ["USER", "ADMIN"]
+    },
+    {
       "username": "service-account-transaction-service",
       "enabled": true,
       "serviceAccountClientId": "transaction-service",

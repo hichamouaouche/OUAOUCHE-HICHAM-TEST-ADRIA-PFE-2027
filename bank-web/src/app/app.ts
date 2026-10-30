@@ -9,6 +9,7 @@ import { logout, username } from './auth';
     <header>
       <strong>Banque</strong>
       <nav>
+        <a routerLink="/dashboard" routerLinkActive="active">Tableau de bord</a>
         <a routerLink="/accounts" routerLinkActive="active">Comptes</a>
         <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
         <a routerLink="/assistant" routerLinkActive="active">Assistant</a>

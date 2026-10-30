@@ -1,7 +1,7 @@
 x-java-service: &java-service
   restart: unless-stopped
   environment: &java-env
-    JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
+    JAVA_TOOL_OPTIONS: ${JAVA_HEAP_OPTS:--Xmx256m -XX:+UseSerialGC}
     CONFIG_URL: http://config-service:8888
     EUREKA_URL: http://discovery-service:8761/eureka
     KEYCLOAK_ISSUER: http://localhost:8180/realms/bank
