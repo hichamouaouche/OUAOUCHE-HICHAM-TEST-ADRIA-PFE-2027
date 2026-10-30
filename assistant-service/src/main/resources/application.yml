@@ -1,0 +1,48 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: assistant-service
+  config:
+    import: optional:configserver:${CONFIG_URL:http://localhost:8888}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/bank}
+          jwk-set-uri: ${KEYCLOAK_JWKS:http://localhost:8180/realms/bank/protocol/openid-connect/certs}
+      client:
+        registration:
+          mcp:
+            provider: keycloak
+            client-id: assistant-service
+            client-secret: ${ASSISTANT_CLIENT_SECRET:assistant-secret}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/bank/protocol/openid-connect/token}
+  ai:
+    openai:
+      # API compatible OpenAI, fournie ici par Ollama Cloud
+      base-url: ${LLM_BASE_URL:https://ollama.com/v1}
+      api-key: ${LLM_API_KEY:missing}
+      chat:
+        options:
+          model: ${LLM_MODEL:gpt-oss:20b}
+    mcp:
+      client:
+        type: SYNC
+        request-timeout: 60s
+        streamable-http:
+          connections:
+            account:
+              url: ${ACCOUNT_MCP_URL:http://localhost:8081}
+            transaction:
+              url: ${TRANSACTION_MCP_URL:http://localhost:8082}
+
+assistant:
+  telegram:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    # Identifiants de chats autorisés, séparés par des virgules ; vide = personne
+    allowed-chat-ids: ${TELEGRAM_ALLOWED_CHAT_IDS:}
