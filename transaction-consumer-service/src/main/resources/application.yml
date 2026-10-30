@@ -1,0 +1,24 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: transaction-consumer-service
+  config:
+    import: optional:configserver:${CONFIG_URL:http://localhost:8888}
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      group-id: transaction-audit
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Un message illisible est journalisé puis ignoré au lieu de bloquer la partition
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        # Le topic à 3 partitions est créé par transaction-service, parfois après le démarrage du consumer
+        allow.auto.create.topics: false
+        metadata.max.age.ms: 10000
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: ma.enset.bank.consumer.TransactionCreatedEvent
+        spring.json.trusted.packages: ma.enset.bank.consumer
